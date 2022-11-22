@@ -1,8 +1,14 @@
 {
-    "name": "laravel/laravel",
+    "name": "contempora/API",
     "type": "project",
-    "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "description": "Prueba Técnica API Contempora.",
+    "keywords": ["framework", "laravel", "sanctum"],
+    "authors": [
+        {
+            "name": "Jesús Bolívar",
+            "email": "j5rojo94@gmail.com"
+        }
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.0.2",
