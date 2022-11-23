@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UsersAllRequest;
+use App\Http\Requests\UsersCreateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -9,38 +11,36 @@ use Illuminate\Support\Facades\Validator;
 
 class UsersController extends Controller
 {
-    protected static array $status = [
+    public static array $status = [
         'true' => 'active',
         'false' => 'inactive'
     ];
 
-    protected static array $gender = [
+    public static array $gender = [
         'hombre' => 'male',
         'mujer' => 'female'
     ];
 
-    public function all( Request $request, $page = null ) {
+    protected function parseUser( $user ): array
+    {
+        return [
+            'id' => $user['id'],
+            'nombre' => $user['name'],
+            'email' => $user['email'],
+            'genero' => array_flip( self::$gender )[ $user['gender'] ],
+            'activo' => array_flip( self::$status )[ $user['status'] ],
+        ];
+    }
 
-        $request->merge( [ 'page' => $request->route('page') ] );
+    public function all( UsersAllRequest $request, $page = null ) {
 
-        $validator = Validator::make($request->all(), [
-            'page' => 'nullable|numeric'
-        ]);
+        $data = $request->safe();
 
-        if ( $validator->fails() ) {
-            return response()->json([
-                'message' => 'Fail data validation',
-                'details' => $validator->messages()->toArray()
-            ], 400);
-        }
-
-        $apiUrl = env('GO_REST_API_URL');
-
-        $requestUrl = $apiUrl . '/users';
+        $requestUrl = $this->apiUrl . '/users';
         $queryParameters = [];
 
         if ( !is_null($page) ) {
-            $queryParameters['page'] = $page;
+            $queryParameters['page'] = $data['page'];
         }
 
         if ( $request->has('nombre') ) {
@@ -52,22 +52,10 @@ class UsersController extends Controller
         }
 
         if ( $request->has('genero') ) {
-            if ( !in_array( $request->query('genero'), array_flip( self::$gender ) ) ) {
-                return response()->json([
-                    'message' => 'Valor de genero no soportado',
-                ], 400);
-            }
-
             $queryParameters['gender'] = self::$gender[ $request->query('genero') ];
         }
 
         if ( $request->has('activos') ) {
-            if ( !in_array( $request->query('activos'), array_flip( self::$status ) ) ) {
-                return response()->json([
-                    'message' => 'Valor activos no soportado',
-                ], 400);
-            }
-
             $queryParameters['status'] = self::$status[ $request->query('activos') ];
         }
 
@@ -82,16 +70,7 @@ class UsersController extends Controller
 
         $response = $request->json();
 
-        $users = [];
-        foreach ( $response as $user ) {
-            $users[] = [
-                'id' => $user['id'],
-                'nombre' => $user['name'],
-                'email' => $user['email'],
-                'genero' => array_flip( self::$gender )[ $user['gender'] ],
-                'activo' => $user['status'] === 'active',
-            ];
-        }
+        $users = array_map( [ $this, 'parseUser' ], $response );
 
         if ( count( $users ) === 0 ) {
             return response()->json( $response, 404 );
@@ -101,45 +80,39 @@ class UsersController extends Controller
 
     }
 
-    public function create( Request $request, ) {
+    public function byId( UsersAllRequest $request, $id ) {
 
-        $validator = Validator::make(
-            $request->all(),
-            [
-                'nombre' => 'required|string',
-                'email' => 'required|email:filter',
-                'genero' => 'required|string',
-                'activo' => 'required|boolean'
-            ]
-        );
+        $data = $request->safe();
 
-        if ( $validator->fails() ) {
+        // Debe usar el token de goRest para poder consultar los usuarios creados
+        $request = Http::withToken( $this->apiToken )
+            ->get( $this->apiUrl . '/users?id=' . $data['id'] );
+
+        if ( $request->failed() ) {
             return response()->json([
-                'message' => 'Fail data validation',
-                'details' => $validator->messages()->toArray()
+                'message' => 'goREST Request error',
+                'details' => $request->json()
             ], 400);
         }
 
-        $apiUrl = env('GO_REST_API_URL');
-        $apiToken = env('GO_REST_API_TOKEN');
+        $response = $request->json();
 
-        $data = $validator->safe();
+        $users = array_map( [ $this, 'parseUser' ], $response );
 
-        if ( !in_array( $data['genero'], array_flip( self::$gender ) ) ) {
-            return response()->json([
-                'message' => 'Valor de genero no soportado',
-            ], 400);
+        if ( count( $users ) === 0 ) {
+            return response()->json( $response, 404 );
         }
 
-        if ( !in_array( json_encode($data['activo']), array_flip( self::$status ) ) ) {
-            return response()->json([
-                'message' => 'Valor activo no soportado',
-            ], 400);
-        }
+        return response()->json( $users );
+    }
 
-        $request = Http::withToken( $apiToken )
+    public function create( UsersCreateRequest $request, ) {
+
+        $data = $request->safe();
+
+        $request = Http::withToken( $this->apiToken )
             ->post(
-                $apiUrl . '/users',
+                $this->apiUrl . '/users',
                 [
                     'name' => $data['nombre'],
                     'email' => $data['email'],
@@ -165,19 +138,13 @@ class UsersController extends Controller
         // Cualquier otro código de respuesta HTTP
         if ( $request->failed() ) {
             return response()->json([
-                'message' => 'Error en la peticion',
+                'message' => 'goREST Request error',
                 'details' => $request->json()
             ], 400);
         }
 
         $user = $request->json();
 
-        return response()->json( [
-            'id' => $user['id'],
-            'nombre' => $user['name'],
-            'email' => $user['email'],
-            'genero' => array_flip( self::$gender )[ $user['gender'] ],
-            'activo' => array_flip( self::$status )[ $user['status'] ],
-        ], 201);
+        return response()->json( $this->parseUser($user), 201 );
     }
 }
