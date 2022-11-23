@@ -1,5 +1,5 @@
 {
-    "name": "contempora/API",
+    "name": "contempora/api",
     "type": "project",
     "description": "Prueba Técnica API Contempora.",
     "keywords": ["framework", "laravel", "sanctum"],

@@ -10,6 +10,9 @@ Crea el archivo de configuración .env en la raíz del proyecto duplicando el ar
 Debes agregar los siguientes parametros de configuración:
 
 ```dotenv
+GO_REST_API_URL=https://gorest.co.in/public/v2
+GO_REST_API_TOKEN="token de gorest"
+
 DB_CONNECTION=sqlite
 DB_DATABASE= ruta absoluta al archivo "database\sqlite\contemporaAPI.db"
 DB_FOREIGN_KEYS=true
