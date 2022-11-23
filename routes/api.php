@@ -16,11 +16,18 @@ use App\Http\Controllers\UsersController;
 |
 */
 
-Route::get('/getToken', [AuthController::class, 'getToken']);
+Route::get('/token', [AuthController::class, 'getToken']);
 
-// Users
+// Usuarios
+    # Muestra todos los usuarios
     Route::get('/usuarios', [UsersController::class, 'all']);
+
+    # Cambia de página de usuarios especificando el parametro page
     Route::get('/usuarios/p/{page?}', [UsersController::class, 'all']);
+
+    # Crea un nuevo usuario
+    Route::post('/usuarios', [UsersController::class, 'create'])
+        ->middleware('auth:sanctum');
 
 /*Route::middleware('auth:sanctum')
     ->get('/user', fn (Request $request) => $request->user());*/

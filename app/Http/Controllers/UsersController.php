@@ -62,6 +62,12 @@ class UsersController extends Controller
         }
 
         if ( $request->has('activos') ) {
+            if ( !in_array( $request->query('activos'), array_flip( self::$status ) ) ) {
+                return response()->json([
+                    'message' => 'Valor activos no soportado',
+                ], 400);
+            }
+
             $queryParameters['status'] = self::$status[ $request->query('activos') ];
         }
 
@@ -93,5 +99,85 @@ class UsersController extends Controller
 
         return response()->json( $users );
 
+    }
+
+    public function create( Request $request, ) {
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nombre' => 'required|string',
+                'email' => 'required|email:filter',
+                'genero' => 'required|string',
+                'activo' => 'required|boolean'
+            ]
+        );
+
+        if ( $validator->fails() ) {
+            return response()->json([
+                'message' => 'Fail data validation',
+                'details' => $validator->messages()->toArray()
+            ], 400);
+        }
+
+        $apiUrl = env('GO_REST_API_URL');
+        $apiToken = env('GO_REST_API_TOKEN');
+
+        $data = $validator->safe();
+
+        if ( !in_array( $data['genero'], array_flip( self::$gender ) ) ) {
+            return response()->json([
+                'message' => 'Valor de genero no soportado',
+            ], 400);
+        }
+
+        if ( !in_array( json_encode($data['activo']), array_flip( self::$status ) ) ) {
+            return response()->json([
+                'message' => 'Valor activo no soportado',
+            ], 400);
+        }
+
+        $request = Http::withToken( $apiToken )
+            ->post(
+                $apiUrl . '/users',
+                [
+                    'name' => $data['nombre'],
+                    'email' => $data['email'],
+                    'gender' => self::$gender[ $data['genero'] ],
+                    'status' => self::$status[ json_encode( $data['activo'] ) ]
+                ]
+            );
+
+        if ( $request->status() === 401 ) {
+            return response()->json([
+                'message' => 'Fallo autorizacion con token en API goREST',
+                'details' => $request->json()
+            ], 401);
+        }
+
+        if ( $request->status() === 422 ) {
+            return response()->json([
+                'message' => 'No se pudo crear el usuario',
+                'details' => $request->json()
+            ], 400);
+        }
+
+        // Cualquier otro código de respuesta HTTP
+        if ( $request->failed() ) {
+            return response()->json([
+                'message' => 'Error en la peticion',
+                'details' => $request->json()
+            ], 400);
+        }
+
+        $user = $request->json();
+
+        return response()->json( [
+            'id' => $user['id'],
+            'nombre' => $user['name'],
+            'email' => $user['email'],
+            'genero' => array_flip( self::$gender )[ $user['gender'] ],
+            'activo' => array_flip( self::$status )[ $user['status'] ],
+        ], 201);
     }
 }
