@@ -117,7 +117,7 @@ class UsersController extends Controller
             return response()->json( $response, 404 );
         }
 
-        return response()->json( $users );
+        return response()->json( $users[0] );
     }
 
     public function patch( UsersPatchRequest $request, $id ) {

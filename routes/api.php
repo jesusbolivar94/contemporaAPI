@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UsersController;
@@ -39,6 +38,3 @@ Route::get('/token', [AuthController::class, 'getToken']);
     # Crea un nuevo usuario
     Route::post('/usuarios', [UsersController::class, 'create'])
         ->middleware('auth:sanctum');
-
-/*Route::middleware('auth:sanctum')
-    ->get('/user', fn (Request $request) => $request->user());*/
