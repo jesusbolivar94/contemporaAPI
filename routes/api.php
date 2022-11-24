@@ -26,7 +26,10 @@ Route::get('/token', [AuthController::class, 'getToken']);
     Route::get('/usuarios/p/{page?}', [UsersController::class, 'all']);
 
     # Muestra un usuario filtrando el listado por ID
-    Route::get('/usuarios/{id}', [UsersController::class, 'byId'])
+    Route::get('/usuarios/{id}', [UsersController::class, 'byId']);
+
+    # Modifica algunos datos del usuario
+    Route::patch('/usuarios/{id}', [UsersController::class, 'patch'])
         ->middleware('auth:sanctum');
 
     # Crea un nuevo usuario

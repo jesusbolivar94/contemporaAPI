@@ -31,7 +31,7 @@ class Authenticate extends Middleware
             'message' => 'Invalid token.'
         ], 401);
 
-        if ( !in_array($request->method(), ['GET', 'DELETE']) ) {
+        if ( !in_array($request->method(), ['GET', 'DELETE', 'PATCH']) ) {
             if ( !$request->isJson() ) return response()->json([
                 'message' => 'Invalid input.'
             ], 401);

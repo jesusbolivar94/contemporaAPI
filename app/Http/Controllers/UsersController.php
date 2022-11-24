@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UsersAllRequest;
 use App\Http\Requests\UsersCreateRequest;
+use App\Http\Requests\UsersPatchRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -44,19 +45,19 @@ class UsersController extends Controller
         }
 
         if ( $request->has('nombre') ) {
-            $queryParameters['name'] = $request->query('nombre');
+            $queryParameters['name'] = $data['nombre'];
         }
 
         if ( $request->has('email') ) {
-            $queryParameters['email'] = $request->query('email');
+            $queryParameters['email'] = $data['email'];
         }
 
         if ( $request->has('genero') ) {
-            $queryParameters['gender'] = self::$gender[ $request->query('genero') ];
+            $queryParameters['gender'] = self::$gender[ $data['genero'] ];
         }
 
         if ( $request->has('activos') ) {
-            $queryParameters['status'] = self::$status[ $request->query('activos') ];
+            $queryParameters['status'] = self::$status[ $data['activos'] ];
         }
 
         $request = Http::get( $requestUrl . '?' . Arr::query( $queryParameters ) );
@@ -104,6 +105,45 @@ class UsersController extends Controller
         }
 
         return response()->json( $users );
+    }
+
+    public function patch( UsersPatchRequest $request, $id ) {
+
+        $data = $request->safe();
+
+        $requestUrl = $this->apiUrl . '/users';
+        $queryParameters = [];
+
+        if ( $request->has('nombre') ) {
+            $queryParameters['name'] = $data['nombre'];
+        }
+
+        if ( $request->has('email') ) {
+            $queryParameters['email'] = $data['email'];
+        }
+
+        if ( $request->has('genero') ) {
+            $queryParameters['gender'] = self::$gender[ $data['genero'] ];
+        }
+
+        if ( $request->has('activo') ) {
+            $queryParameters['status'] = self::$status[ $data['activo'] ];
+        }
+
+        $request = Http::withToken( $this->apiToken )
+            ->patch( $requestUrl . '/' . $data['id'] . '?' . Arr::query( $queryParameters ) );
+
+        if ( $request->failed() ) {
+            return response()->json([
+                'message' => 'goREST Request error',
+                'details' => $request->json()
+            ], 400);
+        }
+
+        $user = $request->json();
+
+        return response()->json( $this->parseUser( $user ) );
+
     }
 
     public function create( UsersCreateRequest $request, ) {
