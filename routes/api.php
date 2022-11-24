@@ -32,6 +32,10 @@ Route::get('/token', [AuthController::class, 'getToken']);
     Route::patch('/usuarios/{id}', [UsersController::class, 'patch'])
         ->middleware('auth:sanctum');
 
+    # Modifica todos los datos del usuario
+    Route::put('/usuarios/{id}', [UsersController::class, 'put'])
+        ->middleware('auth:sanctum');
+
     # Crea un nuevo usuario
     Route::post('/usuarios', [UsersController::class, 'create'])
         ->middleware('auth:sanctum');
