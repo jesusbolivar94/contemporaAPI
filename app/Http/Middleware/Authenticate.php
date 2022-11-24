@@ -20,8 +20,10 @@ class Authenticate extends Middleware
     {
         $token = $request->bearerToken();
 
+        $secure_token = hash('sha256', $token);
+
         $checkToken = Tokens::where([
-            ['token', $token],
+            ['token', $secure_token],
             ['expires_at', '>=', now()]
         ]);
 
@@ -29,7 +31,7 @@ class Authenticate extends Middleware
             'message' => 'Invalid token.'
         ], 401);
 
-        if ( !$request->isMethod('GET') ) {
+        if ( !in_array($request->method(), ['GET', 'DELETE', 'PATCH']) ) {
             if ( !$request->isJson() ) return response()->json([
                 'message' => 'Invalid input.'
             ], 401);

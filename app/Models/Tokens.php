@@ -6,7 +6,6 @@ use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\NewAccessToken;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
-use Laravel\Sanctum\Sanctum;
 
 class Tokens extends SanctumPersonalAccessToken
 {
@@ -18,12 +17,15 @@ class Tokens extends SanctumPersonalAccessToken
         'expires_at'
     ];
 
-    public function createToken()
+    /**
+     * @return NewAccessToken
+     */
+    public function createToken(): NewAccessToken
     {
         $token = Tokens::create([
             'token' => hash('sha256', $plainTextToken = Str::random(40)),
             'abilities' => ['*'],
-            'expires_at' => now()->addHour(3),
+            'expires_at' => now()->addHour(1),
         ]);
 
         return new NewAccessToken($token, $plainTextToken);

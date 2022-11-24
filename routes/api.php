@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UsersController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +15,26 @@ use App\Http\Controllers\AuthController;
 |
 */
 
-Route::get('/getToken', [AuthController::class, 'getToken']);
+Route::get('/token', [AuthController::class, 'getToken']);
 
-/*Route::middleware('auth:sanctum')
-    ->get('/user', fn (Request $request) => $request->user());*/
+// Usuarios
+    # Muestra todos los usuarios
+    Route::get('/usuarios', [UsersController::class, 'all']);
+
+    # Cambia de página de usuarios especificando el parametro page
+    Route::get('/usuarios/p/{page?}', [UsersController::class, 'all']);
+
+    # Muestra un usuario filtrando el listado por ID
+    Route::get('/usuarios/{id}', [UsersController::class, 'byId']);
+
+    # Modifica algunos datos del usuario
+    Route::patch('/usuarios/{id}', [UsersController::class, 'patch'])
+        ->middleware('auth:sanctum');
+
+    # Modifica todos los datos del usuario
+    Route::put('/usuarios/{id}', [UsersController::class, 'put'])
+        ->middleware('auth:sanctum');
+
+    # Crea un nuevo usuario
+    Route::post('/usuarios', [UsersController::class, 'create'])
+        ->middleware('auth:sanctum');
